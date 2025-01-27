@@ -1,7 +1,11 @@
+// TODO: Scope models for each wormhole client (grpc, rest)
+
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use crate::storage::{ReadModel, HasId};
 use schemars::JsonSchema;
+use uuid::Uuid;
+
+use crate::storage::{ReadModel, HasId};
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 pub struct VaaRequest {
@@ -57,10 +61,10 @@ impl HasId for VaaRequest {
 impl ReadModel for VaaResponse {
     type WriteModel = VaaRequest;
 
-    fn from_write_model(_model: &Self::WriteModel) -> Self {  // Add underscore to unused param
+    fn from_write_model(_model: &Self::WriteModel) -> Self { // Leave underscore to supress unused param warning
         Self {
             data: Vec::new(),
             pagination: None,
         }
     }
-} 
+}

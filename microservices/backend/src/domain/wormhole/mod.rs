@@ -1,6 +1,5 @@
 pub mod models;
-pub mod client;
-pub mod handler;
-
-// Re-export main components for easier access
-pub use handler::wormhole_routes; 
+pub mod rest;
+pub use rest::scan_routes;
+pub use rest::client::RestClient;
+pub use models::{VaaRequest, VaaResponse};
