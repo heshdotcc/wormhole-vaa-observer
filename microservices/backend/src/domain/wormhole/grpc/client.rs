@@ -1,8 +1,11 @@
 use std::time::Duration;
-use tokio_stream::StreamExt;
 use tonic::{transport::Channel, Request};
+use tokio_stream::StreamExt;
 use tracing::{info, debug, error};
-use base64;
+use base64::{
+  Engine,
+  engine::general_purpose::STANDARD as BASE64_STANDARD
+};
 use hex;
 
 use crate::library::errors::Error;
@@ -14,9 +17,12 @@ use crate::domain::wormhole::grpc::proto::{
         EmitterFilter,
         SubscribeSignedVaaRequest,
         FilterEntry,
+        SubscribeSignedVaaResponse,
     },
     publicrpc::v1::ChainId,
 };
+
+use super::vaa::VaaProcessor;
 
 #[derive(Clone)]
 pub struct GrpcClient {
@@ -46,14 +52,46 @@ impl GrpcClient {
         Ok(Self { client })
     }
 
-    pub async fn subscribe_all_vaas(&mut self) -> Result<(), Error> {
-        debug!("Starting VAA subscription for all messages");
+    pub async fn subscribe_all_vaas(&mut self, limit: usize) 
+        -> Result<(usize, Vec<SubscribeSignedVaaResponse>), Error> 
+    {
+        debug!("Starting VAA subscription for all messages (limit: {})", limit);
 
         let request = Request::new(SubscribeSignedVaaRequest {
             filters: vec![], // Empty filters to get all VAAs
         });
 
-        self.handle_vaa_stream(request).await
+        debug!("Sending request: {:#?}", request);
+        info!("Starting VAA stream...");
+        
+        let mut stream = self.client
+            .subscribe_signed_vaa(request)
+            .await
+            .map(|response| response.into_inner())
+            .map_err(|e| {
+                error!("gRPC subscription error: {:?}", e);
+                Error::Subscription(e.to_string())
+            })?;
+
+        let mut processor = VaaProcessor::new(limit);
+        let mut vaas = Vec::new();
+
+        while let Some(response) = stream.next().await {
+            match response {
+                Ok(vaa) => {
+                    if !processor.process_vaa(vaa.clone()) {
+                        vaas.push(vaa);
+                        break;
+                    }
+                    vaas.push(vaa);
+                }
+                Err(e) => {
+                    error!("Error receiving VAA: {}", e);
+                }
+            }
+        }
+
+        Ok((processor.processed_count(), vaas))
     }
 
     pub async fn subscribe_to_emitter(
@@ -118,7 +156,7 @@ impl GrpcClient {
                         vaa.vaa_bytes.len(),
                         hex::encode(&vaa.vaa_bytes[0..32].to_vec()),  // First 32 bytes as identifier
                     );
-                    debug!("Full VAA: {}", base64::encode(&vaa.vaa_bytes));
+                    debug!("Full VAA: {}", BASE64_STANDARD.encode(&vaa.vaa_bytes));
                     // TODO: Parse VAA bytes to extract more meaningful data
                 }
                 Err(e) => {
@@ -135,7 +173,7 @@ impl GrpcClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::library::env::get_config;
+    use crate::library::config::get_config;
 
     #[tokio::test]
     async fn test_spy_subscription() -> Result<(), Error> {
@@ -149,7 +187,7 @@ mod tests {
         info!("Testing spy subscription...");
         let mut client = GrpcClient::connect(spy_addr).await?;
         
-        client.subscribe_all_vaas().await?;
+        client.subscribe_all_vaas(50).await?;
         
         Ok(())
     }
