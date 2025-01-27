@@ -1,16 +1,20 @@
 use aide::{
     axum::{routing::get_with, ApiRouter, IntoApiResponse},
     transform::TransformOperation,
+    OperationOutput,
 };
 use axum::{
     extract::State,
-    Json,
     http::StatusCode,
     response::IntoResponse,
+    Json,
 };
 use serde::Serialize;
 use schemars::JsonSchema;
-use crate::state::AppState;
+use std::sync::Arc;
+
+use crate::AppState;
+
 
 #[derive(Serialize, JsonSchema)]
 pub struct HealthResponse {
@@ -27,7 +31,12 @@ pub struct HealthDetails {
     message_queue: bool,
 }
 
-pub fn health_routes(state: AppState) -> ApiRouter {
+impl OperationOutput for HealthResponse {
+  type Inner = Self;
+}
+
+
+pub fn health_routes(state: Arc<AppState>) -> ApiRouter {
     ApiRouter::new()
         .api_route_with(
             "/healthz",
@@ -47,36 +56,28 @@ pub fn health_routes(state: AppState) -> ApiRouter {
         .with_state(state)
 }
 
-// Basic health check - just returns if the service is running
+// Health check - checks if the app is healthy
 async fn health_check() -> impl IntoApiResponse {
     Json(HealthResponse {
         status: "healthy".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         details: None,
-    })
+    }).into_response()
 }
 
-// Liveness probe - checks if the application is running and not deadlocked
+// Readiness probe - checks if the app can accept traffic
 async fn liveness_check() -> impl IntoApiResponse {
-    // Here you could check:
-    // - Memory usage
-    // - CPU usage
-    // - Thread deadlocks
-    // - Critical background tasks
-    
-    // For now, just return healthy if we can respond
     Json(HealthResponse {
         status: "alive".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         details: None,
-    })
+    }).into_response()
 }
 
 // Readiness probe - checks if the app can accept traffic
 async fn readiness_check(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoApiResponse {
-    // Here you would check all external dependencies:
     let details = HealthDetails {
         database: check_database(&state).await,
         cache: check_cache(&state).await,
@@ -99,27 +100,27 @@ async fn readiness_check(
 }
 
 async fn check_database(_state: &AppState) -> bool {
-    // Implement actual database check
+    // TODO: Implement actual database check
     true
 }
 
 async fn check_cache(_state: &AppState) -> bool {
-    // Implement actual cache check
+    // TODO: Implement actual cache check
     true
 }
 
-async fn check_message_queue(_state: &AppState) -> bool {
-    // Implement actual message queue check
+async fn check_message_queue(_state: &Arc<AppState>) -> bool {
+    // TODO: Implement queue check
     true
 }
 
 fn health_check_docs(op: TransformOperation) -> TransformOperation {
     op.description("Basic health check endpoint")
-        .response_with::<200, Json<HealthResponse>, _>(|res| {
+        .response_with::<200, HealthResponse, _>(|res| {
             res.description("Service is running")
                 .example(HealthResponse {
                     status: "healthy".to_string(),
-                    version: "0.1.0".to_string(),
+                    version: env!("CARGO_PKG_VERSION").to_string(),
                     details: None,
                 })
         })
@@ -127,11 +128,11 @@ fn health_check_docs(op: TransformOperation) -> TransformOperation {
 
 fn liveness_check_docs(op: TransformOperation) -> TransformOperation {
     op.description("Kubernetes liveness probe endpoint")
-        .response_with::<200, Json<HealthResponse>, _>(|res| {
+        .response_with::<200, HealthResponse, _>(|res| {
             res.description("Service is alive and functioning")
                 .example(HealthResponse {
                     status: "alive".to_string(),
-                    version: "0.1.0".to_string(),
+                    version: env!("CARGO_PKG_VERSION").to_string(),
                     details: None,
                 })
         })
@@ -139,11 +140,11 @@ fn liveness_check_docs(op: TransformOperation) -> TransformOperation {
 
 fn readiness_check_docs(op: TransformOperation) -> TransformOperation {
     op.description("Kubernetes readiness probe endpoint")
-        .response_with::<200, Json<HealthResponse>, _>(|res| {
+        .response_with::<200, HealthResponse, _>(|res| {
             res.description("Service is ready to accept traffic")
                 .example(HealthResponse {
                     status: "ready".to_string(),
-                    version: "0.1.0".to_string(),
+                    version: env!("CARGO_PKG_VERSION").to_string(),
                     details: Some(HealthDetails {
                         database: true,
                         cache: true,
@@ -151,7 +152,7 @@ fn readiness_check_docs(op: TransformOperation) -> TransformOperation {
                     }),
                 })
         })
-        .response_with::<503, Json<HealthResponse>, _>(|res| {
+        .response_with::<503, HealthResponse, _>(|res| {
             res.description("Service is not ready to accept traffic")
         })
 } 
