@@ -68,3 +68,38 @@ impl ReadModel for VaaResponse {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaaRecord {
+    pub id: Uuid,
+    pub hash: String,
+    pub bytes: Vec<u8>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+impl HasId for VaaRecord {
+    fn id(&self) -> Uuid {
+        self.id
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct VaaRecordView {
+    pub id: Uuid,
+    pub hash: String,
+    pub base64_bytes: String,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+impl ReadModel for VaaRecordView {
+    type WriteModel = VaaRecord;
+
+    fn from_write_model(model: &Self::WriteModel) -> Self {
+        Self {
+            id: model.id,
+            hash: model.hash.clone(),
+            base64_bytes: base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &model.bytes),
+            timestamp: model.timestamp,
+        }
+    }
+}
