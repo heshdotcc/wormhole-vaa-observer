@@ -83,11 +83,12 @@ impl HasId for VaaRecord {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct VaaRecordView {
     pub id: Uuid,
     pub hash: String,
     pub base64_bytes: String,
+    #[schemars(schema_with = "schema_for_datetime")]
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
@@ -102,4 +103,15 @@ impl ReadModel for VaaRecordView {
             timestamp: model.timestamp,
         }
     }
+}
+
+// TODO: Find a better way to compat chrono with schemars
+fn schema_for_datetime(_: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    schemars::schema::Schema::Object(
+        schemars::schema::SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::String.into()),
+            format: Some("date-time".to_string()),
+            ..Default::default()
+        }
+    )
 }
