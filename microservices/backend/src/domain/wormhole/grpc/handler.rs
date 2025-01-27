@@ -5,6 +5,7 @@ use aide::{
 use axum::{
     http::StatusCode,
     response::IntoResponse,
+    extract::State,
     Json,
 };
 use std::sync::Arc;
@@ -13,10 +14,13 @@ use tracing::{info, error};
 use tokio::time::timeout;
 use std::time::Duration;
 use uuid::Uuid;
+use hex;
+use chrono;
 
 use crate::AppState;
 use crate::library::errors::AppError;
 use crate::library::config::get_config;
+use crate::domain::wormhole::models::{VaaRecord, VaaRecordView};
 use super::client::GrpcClient;
 
 const DEFAULT_VAA_LIMIT: usize = 50;
@@ -30,7 +34,17 @@ pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
         .with_state(state)
 }
 
-async fn get_spy_vaas() -> impl IntoApiResponse {
+#[derive(Debug, serde::Serialize)]
+struct SpyResponse {
+    message: String,
+    processed_vaas: usize,
+    note: String,
+    vaas: Vec<VaaRecordView>,
+}
+
+async fn get_spy_vaas(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoApiResponse {
     let result: Result<_, (StatusCode, Json<AppError>)> = async {
         info!("Starting VAA spy service with default limit...");
         
@@ -66,11 +80,27 @@ async fn get_spy_vaas() -> impl IntoApiResponse {
             client.subscribe_all_vaas(DEFAULT_VAA_LIMIT)
         ).await {
             Ok(result) => match result {
-                Ok(count) => Ok(Json(json!({
-                    "message": "Successfully processed VAA stream",
-                    "processed_vaas": count,
-                    "note": "Check server logs for details"
-                }))),
+                Ok((count, vaas)) => {
+                    let mut stored_vaas = Vec::new();
+                    for vaa in vaas {
+                        let record = VaaRecord {
+                            id: Uuid::new_v4(),
+                            hash: hex::encode(&vaa.vaa_bytes[0..32]),
+                            bytes: vaa.vaa_bytes,
+                            timestamp: chrono::Utc::now(),
+                        };
+                        stored_vaas.push(state.vaas_repository().create(record).await);
+                    }
+
+                    let vaa_views = state.vaas_repository().list().await;
+
+                    Ok(Json(SpyResponse {
+                        message: "Successfully processed VAA stream".to_string(),
+                        processed_vaas: count,
+                        note: "Check server logs for details".to_string(),
+                        vaas: vaa_views,
+                    }))
+                },
                 Err(e) => {
                     error!("Failed to subscribe: {}", e);
                     Err((
@@ -109,7 +139,7 @@ fn get_spy_vaas_docs(op: TransformOperation) -> TransformOperation {
     op.description("Stream VAAs from Wormhole Spy service")
         .tag("wormhole-spy")
         .response::<200, ()>()
-        .response::<400, ()>()
-        .response::<500, ()>()
-        .response::<504, ()>()
-} 
+        .response::<400, AppError>()
+        .response::<500, AppError>()
+        .response::<504, AppError>()
+}
