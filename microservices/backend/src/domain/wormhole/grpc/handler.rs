@@ -1,26 +1,31 @@
 use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
+    axum::{
+      routing::get_with,
+      ApiRouter,
+      IntoApiResponse
+    },
     transform::TransformOperation,
+    OperationOutput
 };
 use axum::{
     http::StatusCode,
-    response::IntoResponse,
     extract::State,
     Json,
 };
 use std::sync::Arc;
-use serde_json::json;
 use tracing::{info, error};
 use tokio::time::timeout;
 use std::time::Duration;
 use uuid::Uuid;
 use hex;
 use chrono;
+use schemars::JsonSchema;
 
 use crate::AppState;
 use crate::library::errors::AppError;
 use crate::library::config::get_config;
 use crate::domain::wormhole::models::{VaaRecord, VaaRecordView};
+use crate::domain::wormhole::grpc::vaa::VaaMetadata;
 use super::client::GrpcClient;
 
 const DEFAULT_VAA_LIMIT: usize = 50;
@@ -34,12 +39,17 @@ pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
         .with_state(state)
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, Clone, JsonSchema)]
 struct SpyResponse {
+    metadata: VaaMetadata,
     message: String,
     processed_vaas: usize,
     note: String,
     vaas: Vec<VaaRecordView>,
+}
+
+impl OperationOutput for SpyResponse {
+    type Inner = Self;
 }
 
 async fn get_spy_vaas(
@@ -80,7 +90,7 @@ async fn get_spy_vaas(
             client.subscribe_all_vaas(DEFAULT_VAA_LIMIT)
         ).await {
             Ok(result) => match result {
-                Ok((count, vaas)) => {
+                Ok((count, vaas, metadata)) => {
                     let mut stored_vaas = Vec::new();
                     for vaa in vaas {
                         let record = VaaRecord {
@@ -95,6 +105,7 @@ async fn get_spy_vaas(
                     let vaa_views = state.vaas_repository().list().await;
 
                     Ok(Json(SpyResponse {
+                        metadata,
                         message: "Successfully processed VAA stream".to_string(),
                         processed_vaas: count,
                         note: "Check server logs for details".to_string(),
@@ -130,14 +141,15 @@ async fn get_spy_vaas(
     }.await;
 
     match result {
-        Ok(json) => json.into_response(),
-        Err((status, error)) => (status, error).into_response(),
+        Ok(json) => Ok(json),
+        Err((status, error)) => Err((status, error)),
     }
 }
 
 fn get_spy_vaas_docs(op: TransformOperation) -> TransformOperation {
     op.description("Stream VAAs from Wormhole Spy service")
         .tag("wormhole-spy")
+        // TODO: Add missing schemas
         .response::<200, ()>()
         .response::<400, AppError>()
         .response::<500, AppError>()

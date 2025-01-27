@@ -21,7 +21,7 @@ use crate::domain::wormhole::grpc::proto::{
     },
     publicrpc::v1::ChainId,
 };
-
+use crate::domain::wormhole::grpc::vaa::VaaMetadata;
 use super::vaa::VaaProcessor;
 
 #[derive(Clone)]
@@ -41,8 +41,10 @@ impl GrpcClient {
         
         let channel = Channel::from_shared(addr)
             .map_err(|e| Error::Connection(e.to_string()))?
-            .connect_timeout(Duration::from_secs(5))  // ToDo: Make configurable
-            .tcp_nodelay(true)  // Disables Nagle's algorithm
+            // TODO: Make configurable
+            .connect_timeout(Duration::from_secs(5))
+            // Disables Nagle's algorithm
+            .tcp_nodelay(true) 
             .connect()
             .await
             .map_err(|e| Error::Connection(e.to_string()))?;
@@ -53,12 +55,13 @@ impl GrpcClient {
     }
 
     pub async fn subscribe_all_vaas(&mut self, limit: usize) 
-        -> Result<(usize, Vec<SubscribeSignedVaaResponse>), Error> 
+        -> Result<(usize, Vec<SubscribeSignedVaaResponse>, VaaMetadata), Error> 
     {
         debug!("Starting VAA subscription for all messages (limit: {})", limit);
 
         let request = Request::new(SubscribeSignedVaaRequest {
-            filters: vec![], // Empty filters to get all VAAs
+            // Empty filters to get all VAAs
+            filters: vec![],
         });
 
         debug!("Sending request: {:#?}", request);
@@ -80,7 +83,7 @@ impl GrpcClient {
             match response {
                 Ok(vaa) => {
                     if !processor.process_vaa(vaa.clone()) {
-                        vaas.push(vaa);
+                        // Don't process more VAAs if we've hit the limit
                         break;
                     }
                     vaas.push(vaa);
@@ -91,7 +94,18 @@ impl GrpcClient {
             }
         }
 
-        Ok((processor.processed_count(), vaas))
+        processor.finalize_metadata();
+        // Verify counts before returning
+        if !processor.verify_counts() {
+            error!("VAA count verification failed");
+        }
+
+        Ok((
+          processor.processed_count(),
+          vaas,
+          // Dereference first to clone value instead of reference
+          (*processor.get_metadata()).clone()
+        ))
     }
 
     pub async fn subscribe_to_emitter(
