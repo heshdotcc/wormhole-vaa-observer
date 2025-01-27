@@ -9,6 +9,7 @@ pub struct Config {
     pub api_title: String,
     pub wormholescan_base_url: String,
     pub wormhole_spy_addr: Option<String>,
+    pub wormhole_spy_timeout: u64,
 }
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
@@ -32,6 +33,10 @@ impl Config {
             wormhole_spy_addr: env::var("WORMHOLE_SPY_ADDR")
                 .unwrap_or_else(|_| "http://127.0.0.1:7073".to_string())
                 .into(),
+            wormhole_spy_timeout: env::var("WORMHOLE_SPY_TIMEOUT")
+                .unwrap_or_else(|_| "30".to_string())
+                .parse()
+                .expect("WORMHOLE_SPY_TIMEOUT must be a number"),
         }
     }
 }
