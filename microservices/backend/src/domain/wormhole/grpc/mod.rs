@@ -1,6 +1,7 @@
 pub mod proto;
 pub mod client;
 pub mod handler;
+pub mod vaa;
 
 // Re-export scoped routes
 pub use handler::wormhole_routes as spy_routes;
