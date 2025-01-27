@@ -6,15 +6,17 @@ edition = "2021"
 
 [dependencies]
 aide = { version = "0.14", features = [
-  "redoc",
-  "swagger",
-  "scalar",
-  "axum-json",
-  "macros",
+    "redoc",
+    "swagger",
+    "scalar",
+    "axum",
+    "macros",
 ] }
 anyhow = "1.0"
 async-trait = "0.1"
-axum = { version = "0.8.1", features = ["macros"] }
+axum = { version = "0.8", features = ["macros"] }
+axum-core = "0.5"
+axum-extra = { version = "0.10", features = ["typed-header"] }
 dotenv = "0.15"
 schemars = { version = "0.8.10", features = ["uuid1"] }
 serde = { version = "1.0.144", features = ["derive", "rc"] }
@@ -29,9 +31,11 @@ http-body-util = "0.1"
 hyper-tls = "0.6"
 chrono = "0.4"
 hex = "0.4"
-tonic = "0.10"
+tonic = { version = "0.10", features = ["transport", "codegen", "prost"], default-features = false }
 prost = "0.12"
 tokio-stream = "0.1"
+base64 = "0.21"
+sha2 = "0.10"
 
 [build-dependencies]
 tonic-build = "0.10"
