@@ -12,10 +12,14 @@ use serde_json::json;
 use tracing::{info, error};
 use tokio::time::timeout;
 use std::time::Duration;
+use uuid::Uuid;
 
 use crate::AppState;
-use crate::library::env::get_config;
+use crate::library::errors::AppError;
+use crate::library::config::get_config;
 use super::client::GrpcClient;
+
+const DEFAULT_VAA_LIMIT: usize = 50;
 
 pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
     ApiRouter::new()
@@ -27,53 +31,82 @@ pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
 }
 
 async fn get_spy_vaas() -> impl IntoApiResponse {
-    info!("Starting VAA spy service...");
-    
-    let spy_addr = match &get_config().wormhole_spy_addr {
-        Some(addr) => addr.clone(),
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": "Wormhole spy address not configured" }))
-        ).into_response(),
-    };
-
-    let mut client = match GrpcClient::connect(spy_addr).await {
-        Ok(client) => client,
-        Err(e) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": format!("Failed to connect to spy: {}", e) }))
-        ).into_response(),
-    };
-
-    match timeout(
-        Duration::from_secs(10),
-        client.subscribe_all_vaas()
-    ).await {
-        Ok(result) => match result {
-            Ok(_) => Json(json!({
-                "message": "Successfully started VAA stream",
-                "note": "Check server logs for all incoming VAAs"
-            })).into_response(),
-            Err(e) => {
-                error!("Failed to subscribe: {}", e);
+    let result: Result<_, (StatusCode, Json<AppError>)> = async {
+        info!("Starting VAA spy service with default limit...");
+        
+        let spy_addr = get_config().wormhole_spy_addr
+            .clone()
+            .ok_or_else(|| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("Failed to subscribe: {}", e) }))
-                ).into_response()
+                    Json(AppError {
+                        error: "Spy address not configured".to_string(),
+                        error_id: Uuid::new_v4(),
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        error_details: None,
+                    })
+                )
+            })?;
+
+        let mut client = GrpcClient::connect(spy_addr).await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AppError {
+                        error: format!("Failed to connect to spy: {}", e),
+                        error_id: Uuid::new_v4(),
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        error_details: None,
+                    })
+                )
+            })?;
+
+        match timeout(
+            Duration::from_secs(get_config().wormhole_spy_timeout),
+            client.subscribe_all_vaas(DEFAULT_VAA_LIMIT)
+        ).await {
+            Ok(result) => match result {
+                Ok(count) => Ok(Json(json!({
+                    "message": "Successfully processed VAA stream",
+                    "processed_vaas": count,
+                    "note": "Check server logs for details"
+                }))),
+                Err(e) => {
+                    error!("Failed to subscribe: {}", e);
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(AppError {
+                            error: format!("Failed to subscribe: {}", e),
+                            error_id: Uuid::new_v4(),
+                            status: StatusCode::INTERNAL_SERVER_ERROR,
+                            error_details: None,
+                        })
+                    ))
+                }
+            },
+            Err(_) => {
+                error!("Timeout waiting for spy response");
+                Err((
+                    StatusCode::GATEWAY_TIMEOUT,
+                    Json(AppError {
+                        error: "Timeout waiting for spy response".to_string(),
+                        error_id: Uuid::new_v4(),
+                        status: StatusCode::GATEWAY_TIMEOUT,
+                        error_details: None,
+                    })
+                ))
             }
-        },
-        Err(_) => {
-            error!("Timeout waiting for spy response");
-            (
-                StatusCode::GATEWAY_TIMEOUT,
-                Json(json!({ "error": "Timeout waiting for spy response" }))
-            ).into_response()
         }
+    }.await;
+
+    match result {
+        Ok(json) => json.into_response(),
+        Err((status, error)) => (status, error).into_response(),
     }
 }
 
 fn get_spy_vaas_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Get VAAs from Wormhole Spy for a specific chain and emitter")
+    op.description("Stream VAAs from Wormhole Spy service")
         .tag("wormhole-spy")
         .response::<200, ()>()
         .response::<400, ()>()
