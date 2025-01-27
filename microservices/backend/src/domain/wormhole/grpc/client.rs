@@ -131,3 +131,26 @@ impl GrpcClient {
     }
 }
 
+// ToDo: Add more meaeningful tests for the gRPC client
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::library::env::get_config;
+
+    #[tokio::test]
+    async fn test_spy_subscription() -> Result<(), Error> {
+        // Known test values
+        const CHAIN_ID: u16 = 30;  // Optimism
+        const EMITTER: &str = "000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31";
+
+        let config = get_config();
+        let spy_addr = config.wormhole_spy_addr.expect("Spy address not configured");
+        
+        info!("Testing spy subscription...");
+        let mut client = GrpcClient::connect(spy_addr).await?;
+        
+        client.subscribe_all_vaas().await?;
+        
+        Ok(())
+    }
+}
