@@ -30,30 +30,12 @@ impl Repositories {
 #[derive(Clone)]
 pub struct AppState {
     repositories: Arc<Repositories>,
-    // TODO: Refactor to support proper DI pattern.
-    // pub rest_handler: Arc<WormholeHandler<RestClient>>,
-    // pub grpc_handler: Arc<WormholeHandler<GrpcClient>>,
 }
 
 impl AppState {
     pub async fn new(repositories: Repositories) -> Result<Self, Error> {
-        /* TODO: Refactor to support proper DI pattern.
-        let config = get_config();
-        let rest_handler = Arc::new(WormholeHandler::new_rest());
-        let grpc_handler = Arc::new(
-            WormholeHandler::new_grpc(
-                config.wormhole_spy_addr
-                    .as_ref()
-                    .ok_or_else(|| Error::Connection("Missing wormhole spy address".to_string()))?
-                    .clone()
-            ).await?
-        );
-        */
-
         Ok(Self {
             repositories: Arc::new(repositories),
-            // rest_handler,
-            // grpc_handler,
         })
     }
 
