@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use crate::storage::Repository;
 use crate::domain::wormhole::models::{VaaRequest, VaaResponse, VaaRecord, VaaRecordView};
-use crate::library::config::get_config;
+// use crate::library::config::get_config;
 use crate::library::errors::Error;
 
 #[derive(Clone)]
