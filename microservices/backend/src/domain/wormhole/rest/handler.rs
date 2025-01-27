@@ -61,7 +61,7 @@ async fn get_vaas(
             
             match serde_json::from_slice::<VaaResponse>(&bytes) {
                 Ok(vaas) => {
-                    info!("Successfully retrieved {} VAAs", vaas.data.len());
+                    info!("Successfully retrieved {} VAAs via REST", vaas.data.len());
                     Json(vaas).into_response()
                 },
                 Err(e) => {

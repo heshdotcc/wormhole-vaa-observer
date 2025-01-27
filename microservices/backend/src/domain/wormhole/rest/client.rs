@@ -5,9 +5,9 @@ use hyper_util::{
     rt::TokioExecutor,
 };
 use hyper_tls::HttpsConnector;
-use tracing::{debug, error};
+use tracing::{debug};
 
-use crate::library::env::get_config;
+use crate::library::config::get_config;
 use crate::library::errors::Error;
 
 
