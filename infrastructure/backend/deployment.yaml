@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaa-observer-backend
+  namespace: wormhole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaa-observer-backend
+  template:
+    metadata:
+      labels:
+        app: vaa-observer-backend
+    spec:
+      containers:
+      - name: vaa-observer-backend
+        image: YOUR_REGISTRY_IP:YOUR_NODEPORT/wormhole-vaa-observer-backend:latest
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: env-file
+          mountPath: /app/.env
+          subPath: .env
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      volumes:
+      - name: env-file
+        secret:
+          secretName: vaa-observer-env
