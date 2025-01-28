@@ -2067,6 +2067,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
+name = "wormhole-sdk"
+version = "0.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "996528c7a7c8797d07532f8ec02342bfcb0a7427039d28043206c89a876ded0f"
+
+[[package]]
 name = "wormhole-vaa-observer-backend"
 version = "0.1.0"
 dependencies = [
@@ -2098,6 +2104,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "wormhole-sdk",
 ]
 
 [[package]]
