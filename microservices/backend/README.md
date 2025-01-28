@@ -1,5 +1,7 @@
 # Wormhole VAA Observer Backend
 
+*Spoiler Alert: This is a work in progress, see API Usage section to explore capabilities.*
+
 A Rust-based backend that integrates both Wormhole Scan via REST and Spy via gRPC.
 
 ## Overview
@@ -126,7 +128,11 @@ This project requires a running Spy service, refer to the infrastructure dir for
 
 ## API Usage
 
+*Check Rust Axum HTTP server tracing logs for each event timestamp and UUID information.*
+
 ### Get VAAs from Wormhole Scan
+
+![Scalar Wormhole Scan](../../documentation/scalar-wormhole-scan.png)
 
 `GET /wormhole/scan/vaas/{chain_id}/{emitter}`
 
@@ -140,10 +146,17 @@ This project requires a running Spy service, refer to the infrastructure dir for
 curl 'http://localhost:3000/wormhole/scan/vaas/30/000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31'
 ```
 
+![Scalar Wormhole Scan Method](../../documentation/scalar-wormhole-scan-method.png)
+
+
 ### Get raw VAAs from a Wormhole Spy instance
+
+![Scalar Wormhole Spy](../../documentation/scalar-wormhole-spy.png)
 
 **Example**
 
 ```bash
 curl 'http://localhost:3000/wormhole/spy/vaas'
 ```
+
+![Scalar Wormhole Spy Method](../../documentation/scalar-wormhole-spy-method.png)
