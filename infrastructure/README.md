@@ -9,20 +9,44 @@ kubectl create ns wormhole
 
 ## Spy
 
+### Docker
 A quick and easy way to spin-up the Spy can be just with:
+
+```
+docker run --pull=always --platform=linux/amd64 \
+    -p 7073:7073 \
+    --entrypoint /guardiand ghcr.io/wormhole-foundation/guardiand:latest \
+    spy \
+    --nodeKey /node.key \
+    --spyRPC "[::]:7073" \
+    --env testnet
+```
+
+As per official [Wormhole docs for setting up a local Spy](https://wormhole.com/docs/infrastructure/spy/run-spy/#__tabbed_1_2) on the testnet.
+
+That setup will handle node key generation internally by itself.
+
+### Kubernetes
+
+In the case of Kubernetes, it's required to generate the key and make it accessible to the Spy pod.
+
+Here, we will use a manifest available at [wormhole-foundation/wormhole/devnet](https://github.com/wormhole-foundation/wormhole/tree/main/devnet) dir.
+
+To create a node key for the Spy, you can leverage the very same `guardiand` image:
 ```
 podman run --rm \
     -v "$(pwd):/keys" \
     ghcr.io/wormhole-foundation/guardiand:latest \
     keygen /keys/node.key
 ```
-It will handle the Key generation on itself.
 
-A more production-grade solution would imply creating a Key with `openssl rand -hex 16` and sourcing it within a secure volume:
+Then, a production-grade solution would imply creating a secret with such key:
 
 ```
 kubectl -n wormhole create secret generic spy-node-key --from-file=node.key=./node.key
 ```
+
+And mounting it securely as per the `wormhole-spy` adjacent manifests.
 
 Then you can adjust the `wormhole-spy` manifest and apply if:
 ```
