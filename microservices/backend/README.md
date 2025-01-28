@@ -126,6 +126,14 @@ WORMHOLE_SPY_ADDR="127.0.0.1:30073"
 ```
 This project requires a running Spy service, refer to the infrastructure dir for more instructions.
 
+**Building**
+
+The protobufs under `proto` depends on root `build.rs` file to build with command:
+```
+cargo build --release
+```
+A multi-stage Dockerfile is provided at the root level, already tested for every proto dependency required.
+
 ## API Usage
 
 *Check Rust Axum HTTP server tracing logs for each event timestamp and UUID information.*
@@ -134,29 +142,31 @@ This project requires a running Spy service, refer to the infrastructure dir for
 
 ![Scalar Wormhole Scan](../../documentation/scalar-wormhole-scan.png)
 
+![Scalar Wormhole Scan Method](../../documentation/scalar-wormhole-scan-method.png)
+
+**Method**
 `GET /wormhole/scan/vaas/{chain_id}/{emitter}`
 
 **Parameters**
 - `chain_id`: Chain ID (e.g., 2 for Ethereum, 30 for Optimism)
 - `emitter`: 32-byte hex address of the emitter
 
-**Example**:
+**Example**
 
 ```bash
-curl 'http://localhost:3000/wormhole/scan/vaas/30/000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31'
+curl 'http://127.0.0.1:3000/wormhole/scan/vaas/30/000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31'
 ```
-
-![Scalar Wormhole Scan Method](../../documentation/scalar-wormhole-scan-method.png)
-
 
 ### Get raw VAAs from a Wormhole Spy instance
 
 ![Scalar Wormhole Spy](../../documentation/scalar-wormhole-spy.png)
 
-**Example**
+**Method**
+`GET /wormhole/spy/vaas/`
 
+**Example**
 ```bash
-curl 'http://localhost:3000/wormhole/spy/vaas'
+curl 'http://127.0.0.1:3000/wormhole/spy/vaas'
 ```
 
 ![Scalar Wormhole Spy Method](../../documentation/scalar-wormhole-spy-method.png)
