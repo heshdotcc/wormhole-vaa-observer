@@ -1,0 +1,44 @@
+[package]
+name = "wormhole-vaa-observer-backend"
+authors = ["Federico Cipriani <yo@hesh.cc>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aide = { version = "0.14", features = [
+    "redoc",
+    "swagger",
+    "scalar",
+    "axum-json",
+    "macros",
+] }
+anyhow = "1.0"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["macros"] }
+axum-core = "0.5"
+axum-extra = { version = "0.10", features = ["typed-header"] }
+dotenv = "0.15"
+schemars = { version = "0.8.10", features = ["uuid1"] }
+serde = { version = "1.0.144", features = ["derive", "rc"] }
+serde_json = "1.0.85"
+tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread"] }
+tower-http = { version = "0.4", features = ["trace"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.1.2", features = ["serde", "v4", "v5"] }
+hyper = { version = "1.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http-body-util = "0.1"
+hyper-tls = "0.6"
+chrono = { version = "0.4", features = ["serde"] }
+hex = "0.4"
+tonic = { version = "0.10", features = ["transport", "codegen", "prost"], default-features = false }
+prost = "0.12"
+tokio-stream = "0.1"
+base64 = "0.21"
+sha2 = "0.10"
+wormhole-sdk = "0.0.7"
+
+[build-dependencies]
+tonic-build = "0.10"
+prost-build = "0.12"
