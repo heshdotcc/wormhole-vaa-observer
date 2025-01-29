@@ -16,8 +16,27 @@ pub struct VaaRequest {
 // Updated to match Wormhole API response format
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 pub struct VaaResponse {
+    pub metadata: VaaMetadata,
     pub data: Vec<VaaDoc>,
     pub pagination: Option<ResponsePagination>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct VaaMetadata {
+    pub total_items: usize,
+    pub total_duplicates: usize,
+    pub duplicated_sequences: Vec<u64>,
+    pub lowest_sequence: Option<u64>,
+    pub highest_sequence: Option<u64>,
+    pub sequence_gaps: Vec<SequenceGap>,
+    pub total_gaps: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct SequenceGap {
+    pub from: u64,
+    pub to: u64,
+    pub size: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
@@ -61,8 +80,17 @@ impl HasId for VaaRequest {
 impl ReadModel for VaaResponse {
     type WriteModel = VaaRequest;
 
-    fn from_write_model(_model: &Self::WriteModel) -> Self { // Leave underscore to supress unused param warning
+    fn from_write_model(_model: &Self::WriteModel) -> Self {
         Self {
+            metadata: VaaMetadata {
+                sequence_gaps: Vec::new(),
+                duplicated_sequences: Vec::new(),
+                total_gaps: 0,
+                total_duplicates: 0,
+                total_items: 0,
+                lowest_sequence: None,
+                highest_sequence: None,
+            },
             data: Vec::new(),
             pagination: None,
         }

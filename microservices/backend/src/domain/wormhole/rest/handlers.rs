@@ -11,11 +11,24 @@ use axum::{
 };
 use serde_json::json;
 use tracing::{info, error, debug};
+use serde::Deserialize;
 
 use crate::AppState;
 use super::client::RestClient;
-use crate::domain::wormhole::models::{VaaRequest, VaaResponse};
+use crate::domain::wormhole::models::{
+    VaaRequest, 
+    VaaResponse, 
+    VaaDoc, 
+    VaaMetadata,
+    ResponsePagination,
+};
+use super::vaa::analyze_sequences;
 
+#[derive(Debug, Deserialize)]
+struct ExternalVaaResponse {
+    data: Vec<VaaDoc>,
+    pagination: Option<ResponsePagination>,
+}
 
 pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
     ApiRouter::new()
@@ -29,24 +42,20 @@ pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
 async fn get_vaas(
     Path(params): Path<VaaRequest>,
 ) -> impl IntoApiResponse {
-    // Validate emitter address format
     if params.emitter.len() != 64 {  // 32 bytes in hex = 64 chars
         return (
             StatusCode::BAD_REQUEST,
             Json(json!({
                 "error": "Invalid emitter address length. Expected 64 hex characters (32 bytes)",
-                "example": "000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31"
             }))
         ).into_response();
     }
 
-    // Validate it's a valid hex string
     if hex::decode(&params.emitter).is_err() {
         return (
             StatusCode::BAD_REQUEST,
             Json(json!({
                 "error": "Invalid emitter address format. Expected hex string",
-                "example": "000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31"
             }))
         ).into_response();
     }
@@ -59,10 +68,26 @@ async fn get_vaas(
             let raw_response = String::from_utf8_lossy(&bytes);
             debug!("Raw API response (truncated): {}...", &raw_response.chars().take(200).collect::<String>());
             
-            match serde_json::from_slice::<VaaResponse>(&bytes) {
-                Ok(vaas) => {
-                    info!("Successfully retrieved {} VAAs via REST", vaas.data.len());
-                    Json(vaas).into_response()
+            match serde_json::from_slice::<ExternalVaaResponse>(&bytes) {
+                Ok(external_response) => {
+                    let total_items = external_response.data.len();
+                    info!("Successfully retrieved {} VAAs via REST", total_items);
+                    let mut response = VaaResponse {
+                        metadata: VaaMetadata {
+                            total_items,
+                            total_duplicates: 0,
+                            duplicated_sequences: Vec::new(),
+                            lowest_sequence: None,
+                            highest_sequence: None,
+                            sequence_gaps: Vec::new(),
+                            total_gaps: 0,
+                        },
+                        data: external_response.data,
+                        pagination: external_response.pagination,
+                    };
+                    
+                    analyze_sequences(&mut response);
+                    Json(response).into_response()
                 },
                 Err(e) => {
                     error!("Failed to parse VAA response: {}", e);

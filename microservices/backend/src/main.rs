@@ -1,20 +1,17 @@
 use std::sync::Arc;
-
-use aide::{
-    axum::ApiRouter,
-    openapi::OpenApi,
-};
+use tokio::net::TcpListener;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use aide::{axum::ApiRouter, openapi::OpenApi};
 use axum::Extension;
-use library::docs::docs_routes;
+
 use state::{AppState, Repositories};
 use domain::{
   health::health_routes,
   wormhole::{scan_routes, spy_routes}
 };
-use tokio::net::TcpListener;
-use crate::storage::{Repository, memory::MemoryRepository};
+use library::docs::docs_routes;
 use library::config::get_config;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use crate::storage::{Repository, memory::MemoryRepository};
 
 pub mod domain;
 pub mod library;
@@ -23,7 +20,6 @@ pub mod storage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG")
@@ -56,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = get_config();
     
-    println!("Example docs are accessible at http://{}:{}/docs", config.host, config.port);
+    println!("Scalar Docs are now available at http://{}:{}/docs", config.host, config.port);
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
         .await
