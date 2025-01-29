@@ -15,6 +15,7 @@ use tokio::net::TcpListener;
 use crate::storage::{Repository, memory::MemoryRepository};
 use library::config::get_config;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use library::metrics::{setup_metrics_recorder, create_metrics_layer, add_metrics_routes};
 
 pub mod domain;
 pub mod library;
@@ -44,19 +45,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::new(repositories).await?;
 
     let mut api = OpenApi::default();
+    
+    // Setup prometheus recorder
+    let prometheus_handle = setup_metrics_recorder();
 
     let app = ApiRouter::new()
         .merge(health_routes(Arc::new(state.clone())))
         .merge(scan_routes(Arc::new(state.clone())))
         .merge(spy_routes(Arc::new(state.clone())))
-        .nest_api_service("/docs", docs_routes(Arc::new(state)))
+        .nest_api_service("/docs", docs_routes(Arc::new(state)));
+
+    // Convert to regular Router and add layers
+    let app = app
         .finish_api_with(&mut api, library::docs::configure_api_docs)
-        .layer(Extension(Arc::new(api)))
-        .with_state(());
+        .layer(Extension(Arc::new(api)));
+
+    // Add metrics endpoint
+    let app = add_metrics_routes(app, prometheus_handle);
 
     let config = get_config();
     
     println!("Example docs are accessible at http://{}:{}/docs", config.host, config.port);
+    println!("Metrics are accessible at http://{}:{}/metrics", config.host, config.port);
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
         .await

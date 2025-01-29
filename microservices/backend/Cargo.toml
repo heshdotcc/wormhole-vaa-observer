@@ -21,8 +21,12 @@ dotenv = "0.15"
 schemars = { version = "0.8.10", features = ["uuid1"] }
 serde = { version = "1.0.144", features = ["derive", "rc"] }
 serde_json = "1.0.85"
+metrics = "0.21"
+metrics-exporter-prometheus = "0.12"
+metrics-util = "0.15"
 tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread"] }
-tower-http = { version = "0.4", features = ["trace"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.4", features = ["trace", "metrics"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "v5"] }
@@ -38,6 +42,7 @@ tokio-stream = "0.1"
 base64 = "0.21"
 sha2 = "0.10"
 wormhole-sdk = "0.0.7"
+sys-info = "0.9"
 
 [build-dependencies]
 tonic-build = "0.10"

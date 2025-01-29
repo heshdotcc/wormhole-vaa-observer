@@ -3,6 +3,7 @@ use tracing::{debug, info, error};
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use serde::Serialize;
 use schemars::JsonSchema;
+use crate::library::metrics::record_vaa_metrics;
 
 use crate::domain::wormhole::grpc::proto::spy::v1::SubscribeSignedVaaResponse;
 
@@ -78,12 +79,29 @@ impl VaaProcessor {
                 hash
             );
             debug!("Full VAA: {}", BASE64_STANDARD.encode(&vaa.vaa_bytes));
+
             // TODO: Add to missing sequence anomaly detection logic
+            record_vaa_metrics(
+                self.metadata.total_processed,
+                self.metadata.unique_count,
+                self.metadata.duplicate_count,
+                self.metadata.sequence_gaps
+            );
+
             true
         } else {
             debug!("Found duplicate VAA with hash: {}", hash);
             self.metadata.duplicate_count += 1;
             self.duplicated_hashes.insert(hash.clone());
+
+            // TODO: Make this more DRY or compat auto-instrumentation
+            record_vaa_metrics(
+                self.metadata.total_processed,
+                self.metadata.unique_count,
+                self.metadata.duplicate_count,
+                self.metadata.sequence_gaps
+            );
+
             true
         }
     }
