@@ -60,7 +60,7 @@ Note that this project was made as a mere proof of concept. Still, ADRs will ser
   - [ ] Integration of a service mesh to secure gRPC and REST communication between the backend and frontend.
 **Monitoring and Observability**
   - [ ] Integration of Prometheus and Grafana for backend metrics and logs.
-  - [ ] Instrumentation of backend ([WIP](https://github.com/heshdotcc/wormhole-vaa-observer/tree/feature/observability)) and frontend services with custom metrics and traces.
+  - [ ] Instrumentation of backend ([WIP](https://github.com/heshdotcc/wormhole-vaa-observer/pull/2)) and frontend services with custom metrics and traces.
   - [ ] Dashboards for Wormhole Spy and VAA analytics (e.g. gRPC latency, request volume, and anomaly detection statistics)
 **CI/CD Pipeline**
   - [ ] GitHub Actions or GitLab CI pipelines to automate building, testing, and deployment.
