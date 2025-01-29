@@ -55,21 +55,18 @@ Note that this project was made as a mere proof of concept. Still, ADRs will ser
 - [x] A high-level interface for DataTables, Charts, and LocalStorage customizable Widgets.
 
 ### Infrastructure
-- **Kubernetes Deployment**
+**Kubernetes Deployment**
   - [x] Deployment of the Wormhole Spy service in a Kubernetes cluster with NodePort exposure.
   - [ ] Integration of a service mesh to secure gRPC and REST communication between the backend and frontend.
-- **Helm Chart**
-  - [ ] Creation of a Helm chart to package the full stack, including the Rust backend, Deno middleware/frontend, and Spy service.
-  - [ ] Parametrized values for easy customization (e.g., environment variables, persistence configuration).
-- **Monitoring and Observability**
+**Monitoring and Observability**
   - [ ] Integration of Prometheus and Grafana for backend metrics and logs.
-  - [ ] Instrumentation of backend and frontend services with custom metrics and traces.
+  - [ ] Instrumentation of backend ([WIP](https://github.com/heshdotcc/wormhole-vaa-observer/tree/feature/observability)) and frontend services with custom metrics and traces.
   - [ ] Dashboards for Wormhole Spy and VAA analytics (e.g. gRPC latency, request volume, and anomaly detection statistics)
-- **CI/CD Pipeline**
+**CI/CD Pipeline**
   - [ ] GitHub Actions or GitLab CI pipelines to automate building, testing, and deployment.
   - [ ] Integration with a local Docker or Kaniko registry for container builds.
   - [ ] Automated rollback mechanisms for Kubernetes deployments using Helm or Argo Rollouts.
-- **DevOps Utilities**
+**DevOps Utilities**
   - [ ] A configurable Ngrok Kubernete Operator to securely expose the microservices during development.
   - [ ] Terraform IaC templates for setting up the infrastructure in hybrid environments.
   - [ ] Local development tools using Nix Shell and devcontainers.
