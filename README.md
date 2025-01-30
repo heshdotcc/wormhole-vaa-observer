@@ -8,7 +8,7 @@ The ultimate idea is to:
 * Revamp [wormhole-dashboard](https://github.com/wormhole-foundation/wormhole-dashboard) with newer technologies while exploring the [wormhole-sdk](https://wormhole-foundation.github.io/wormhole-sdk-ts/) and its APIs. 
 * Understand the status-quo of Wormhole [devnet](https://github.com/wormhole-foundation/wormhole/tree/main/devnet) while looking for improving documentation and its adoption.
 * Finding for ways to contribute to [wormhole-sdk-rs](https://github.com/wormhole-foundation/wormhole-sdk-rs) crate maintenance and its potential integrations.
-* Integrate a defacto industry-grade workflow engine like Temporal.io to handle VAA ingestion and processing.
+* Integrate a defacto industry-grade workflow engine like [Temporal.io](https://github.com/temporalio/temporal) to handle VAA ingestion and processing.
 
 ## Root Structure
 
@@ -34,6 +34,8 @@ Each folder contains its own `README.md` file for scoped documentation:
     ├── backend
     └── frontend
 ```
+
+A root Nix Flake spawns a development shell by running the  `nix develop` command.
 
 ## Roadmap
 Note that this project was made as a mere proof of concept. Still, ADRs will serve as a future-proof guide.
