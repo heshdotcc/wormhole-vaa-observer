@@ -17,8 +17,6 @@ Why not combine both? The idea is to explore the following use cases:
 - Provide a mechanism to detect, track, and alert missing and duplicate VAAs.
 - Exploring specific Anomaly Detection use cases (e.g., through LIME and SHAP frameworks).
 
-View the Domains ADR to explore potential scopes of the project.
-
 ### Key Features
 
 - An uber-performant Axum REST server, Hyper REST client, and Tonic gRPC client/server.
@@ -30,7 +28,7 @@ View the Domains ADR to explore potential scopes of the project.
 - A repository pattern with a facade for future storage extensibility.
 - A health-check, liveness, and readiness endpoints for the backend lifecycle hooks.
 
-View the Technology ADR to explore decisions beyond the chosen technologies.
+See the [Technology ADR](../../documentation/ADR-01-TECHNOLOGY.md) and related docs for decisions beyond the chosen technologies.
 
 ## Project Structure
 
@@ -187,7 +185,7 @@ A multi-stage Dockerfile is provided at the root level, already tested for every
 
 The VAA is Base64-encoded but contains binary data, see below `/observer/vaas/decode` endpoint for details.
 
-Expect that sometimes Wormhole Scan will not have missing VAAs, so our crafted metadata will be mostly empty.
+*Expect that sometimes Wormhole Scan will not have missing VAAs, so our crafted metadata will be mostly empty.*
 
 **Example**
 
