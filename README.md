@@ -48,30 +48,22 @@ Note that this project was made as a mere proof of concept. Still, ADRs will ser
 - [x] A production-grade microservice template for a highly scalable backend.
 - [x] An integration of Wormhole Scan API to fetch VAAs through a Rust HTTP Server/Client.
 - [x] An integration of Wormhole Spy to fetch raw VAAs through a Rust gRPC Server/Client.
-- [ ] A robust Anomaly Detection domain use-case to find duplicated and missing VAAs.
-  - [x] A rudimentary way to detect duplicated raw VAAs through a local Spy.
-  - [ ] Sophistication of raw VAAs decoding algorithm (based on official efforts).
-  - [ ] Stored version of missing/duplicated VAAs with cache and persistence.
+- [x] A metadata object from the analysis of duplicated VAAs returned by Wormhole Scan/Spy.
+- [x] A base64-binary decoding algorithm for VAAs (based on official efforts).
+- [ ] A more robust Anomaly Detection domain use-cases to around VAAs sequences.
 - [ ] An event store that provides audibility and reproducibility of the domain storage.
 - [ ] A transactional database to command and query analytics, enabled with a time-series extension.
 
 **FrontEnd**
 - [ ] A Deno-based WebSocket connection to ingest Spy backend data in its low-latency fashion.
-- [x] A high-level interface for DataTables, Charts, and LocalStorage customizable Widgets.
+- [ ] A high-level interface for DataTables, Charts, and LocalStorage customizable Widgets (WIP).
 
 ### Infrastructure
 **Kubernetes Deployment**
   - [x] Deployment of the Wormhole Spy service in a Kubernetes cluster with NodePort exposure.
+  - [x] Working manifests for deploying the backend services pulled by a local Registry.
   - [ ] Integration of a service mesh to secure gRPC and REST communication between the backend and frontend.
 **Monitoring and Observability**
-  - [ ] Integration of Prometheus and Grafana for backend metrics and logs.
+  - [ ] Integration of Prometheus and Grafana for backend metrics and logs. (WIP in feature/observability branch)
   - [ ] Instrumentation of backend ([WIP](https://github.com/heshdotcc/wormhole-vaa-observer/pull/2)) and frontend services with custom metrics and traces.
   - [ ] Dashboards for Wormhole Spy and VAA analytics (e.g. gRPC latency, request volume, and anomaly detection statistics)
-**CI/CD Pipeline**
-  - [ ] GitHub Actions or GitLab CI pipelines to automate building, testing, and deployment.
-  - [ ] Integration with a local Docker or Kaniko registry for container builds.
-  - [ ] Automated rollback mechanisms for Kubernetes deployments using Helm or Argo Rollouts.
-**DevOps Utilities**
-  - [ ] A configurable Ngrok Kubernete Operator to securely expose the microservices during development.
-  - [ ] Terraform IaC templates for setting up the infrastructure in hybrid environments.
-  - [ ] Local development tools using Nix Shell and devcontainers.
