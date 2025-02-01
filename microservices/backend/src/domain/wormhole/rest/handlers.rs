@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
+    axum::{routing::{get_with, post_with}, ApiRouter, IntoApiResponse},
     transform::TransformOperation,
 };
 use axum::{
@@ -22,7 +22,7 @@ use crate::domain::wormhole::models::{
     VaaMetadata,
     ResponsePagination,
 };
-use super::vaa::analyze_sequences;
+use super::vaa::{analyze_sequences, decode_vaa, DecodeVaaRequest};
 
 #[derive(Debug, Deserialize)]
 struct ExternalVaaResponse {
@@ -35,6 +35,10 @@ pub fn wormhole_routes(state: Arc<AppState>) -> ApiRouter {
         .api_route(
             "/scan/vaas/{chain_id}/{emitter}",
             get_with(get_vaas, get_vaas_docs),
+        )
+        .api_route(
+            "/observer/vaas/decode",
+            post_with(decode_vaa_handler, decode_vaa_docs),
         )
         .with_state(state)
 }
@@ -109,6 +113,20 @@ async fn get_vaas(
     }
 }
 
+pub async fn decode_vaa_handler(
+    Json(request): Json<DecodeVaaRequest>,
+) -> impl IntoApiResponse {
+    match decode_vaa(&request.vaa) {
+        Ok(decoded) => Json(decoded).into_response(),
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            Json(json!({
+                "error": format!("Failed to decode VAA: {}", e)
+            }))
+        ).into_response(),
+    }
+}
+
 fn get_vaas_docs(op: TransformOperation) -> TransformOperation {
     op.description("Get VAAs for a specific chain and emitter")
         .tag("wormhole-scan")
@@ -123,4 +141,12 @@ fn get_vaas_docs(op: TransformOperation) -> TransformOperation {
         .response::<200, ()>()
         .response::<400, ()>()
         .response::<500, ()>()
-} 
+}
+
+fn decode_vaa_docs(op: TransformOperation) -> TransformOperation {
+    op.description("Decode a base64-encoded VAA")
+        .tag("wormhole-observer")
+        .response::<200, ()>()
+        .response::<400, ()>()
+        .description("Submit a base64/binary-encoded VAA to decode and analyze its contents.")
+}
