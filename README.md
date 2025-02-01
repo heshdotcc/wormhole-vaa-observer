@@ -24,9 +24,8 @@ Each folder contains its own `README.md` file for scoped documentation:
 .
 ├── README.md
 ├── documentation
-│   ├── ADR-01-DOMAINS.md
-│   ├── ADR-02-TECHNOLOGY.md
-│   └── ADR-03-VALIDATION.md
+│   ├── ADR-01-TECHNOLOGY.md
+│   └── ADR-02-DOMAINS.md
 ├── infrastructure
 │   └── wormhole-spy.yaml
 │   └── README.md
