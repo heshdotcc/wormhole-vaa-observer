@@ -37,6 +37,8 @@ Each folder contains its own `README.md` file for scoped documentation:
 
 A root Nix Flake spawns a development shell by running the  `nix develop` command.
 
+It's encouraged to leverage Nix Flake tools for building, running, and live-formatting code.
+
 ## Roadmap
 Note that this project was made as a mere proof of concept. Still, ADRs will serve as a future-proof guide.
 

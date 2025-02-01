@@ -23,6 +23,7 @@
             rustc
             cargo
             rust-analyzer
+            rustfmt
             openssl
             nodejs_22
             deno
