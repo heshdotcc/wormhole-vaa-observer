@@ -62,7 +62,7 @@ Note that this project was made as a mere proof of concept. Still, ADRs will ser
   - [x] Deployment of the Wormhole Spy service in a Kubernetes cluster with NodePort exposure.
   - [x] Working manifests for deploying the backend services pulled by a local Registry.
   - [ ] Integration of a service mesh to secure gRPC and REST communication between the backend and frontend.
+
 **Monitoring and Observability**
-  - [ ] Integration of Prometheus and Grafana for backend metrics and logs. (WIP in feature/observability branch)
-  - [ ] Instrumentation of backend ([WIP](https://github.com/heshdotcc/wormhole-vaa-observer/pull/2)) and frontend services with custom metrics and traces.
-  - [ ] Dashboards for Wormhole Spy and VAA analytics (e.g. gRPC latency, request volume, and anomaly detection statistics)
+  - [ ] Integration of Prometheus and Grafana alongside OTEL for backend metrics and logs. (WIP in feature/observability branch).
+  - [ ] Dashboards for Wormhole Spy and VAA analytics (e.g., gRPC latency, request volume, and anomaly detection statistics).
