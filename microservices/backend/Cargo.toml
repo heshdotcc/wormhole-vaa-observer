@@ -6,11 +6,11 @@ edition = "2021"
 
 [dependencies]
 aide = { version = "0.14", features = [
-    "redoc",
-    "swagger",
-    "scalar",
-    "axum-json",
-    "macros",
+  "redoc",
+  "swagger",
+  "scalar",
+  "axum-json",
+  "macros",
 ] }
 anyhow = "1.0"
 async-trait = "0.1"
@@ -32,12 +32,17 @@ http-body-util = "0.1"
 hyper-tls = "0.6"
 chrono = { version = "0.4", features = ["serde"] }
 hex = "0.4"
-tonic = { version = "0.10", features = ["transport", "codegen", "prost"], default-features = false }
+tonic = { version = "0.10", features = [
+  "transport",
+  "codegen",
+  "prost",
+], default-features = false }
 prost = "0.12"
 tokio-stream = "0.1"
 base64 = "0.21"
 sha2 = "0.10"
 wormhole-sdk = "0.0.7"
+byteorder = "1.5"
 
 [build-dependencies]
 tonic-build = "0.10"
