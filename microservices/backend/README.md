@@ -151,6 +151,44 @@ A multi-stage Dockerfile is provided at the root level, already tested for every
 - `chain_id`: Chain ID (e.g., 2 for Ethereum, 30 for Optimism)
 - `emitter`: 32-byte hex address of the emitter
 
+**Response payload**
+```json
+{
+  "metadata": {
+    "total_items": 50,
+    "total_duplicates": 0,
+    "duplicated_sequences": [],
+    "lowest_sequence": 155060,
+    "highest_sequence": 155109,
+    "sequence_gaps": [],
+    "total_gaps": 0
+  },
+  "data": [
+    {
+      "sequence": 155060,
+      "id": "30/000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31/155060",
+      "version": 1,
+      "emitterChain": 30,
+      "emitterAddr": "000000000000000000000000706f82e9bb5b0813501714ab5974216704980e31",
+      "emitterNativeAddr": "0x706f82e9bb5b0813501714ab5974216704980e31",
+      "guardianSetIndex": 4,
+      "vaa": "<REDACTED-BASE64-ENCODED-BINARY-VAA>",
+      "timestamp": "2025-02-01T01:20:33Z",
+      "updatedAt": "2025-02-01T01:45:11.290605Z",
+      "indexedAt": "2025-02-01T01:45:11.290605Z",
+      "txHash": "2edf49d5ca38cb81e75ade8bea22dd9d7a3ada855d9234593688e0d1af66d71d",
+      "digest": "396ce90b28d32c4d7bc5875965a6bd264702223b4479686a974afbd70bc843a7",
+      "isDuplicated": false
+    },
+    ... // more VAAs
+  ]
+}
+```
+
+The VAA is Base64-encoded but contains binary data, see below `/observer/vaas/decode` endpoint for details.
+
+Expect that sometimes Wormhole Scan will not have missing VAAs, so our crafted metadata will be mostly empty.
+
 **Example**
 
 ```bash
@@ -170,3 +208,50 @@ curl 'http://127.0.0.1:3000/wormhole/spy/vaas'
 ```
 
 ![Scalar Wormhole Spy Method](../../documentation/scalar-wormhole-spy-method.png)
+
+### Decode a VAA's binary contents
+
+![Scalar Wormhole Observer VAA Decode](../../documentation/scalar-wormhole-observer-vaas-decode.png)
+
+**Method**
+`POST /wormhole/observer/vaas/decode`
+
+**Request Body**
+```json
+{
+  "vaa": "<base64-encoded-vaa>"
+}
+```
+
+**Response payload**
+```json
+{
+  "version": 1,
+  "guardian_set_index": 4,
+  "signatures": [
+    {
+      "index": 0,
+      "signature": "f35ea5b224721f9c2dcdea01833374291f914ea4e8b2b5d19d28a434797fdb591f7fe56c84d692b297fcd093a84ad76142a5d528a7212e36f565b729af8e100f01"
+    }
+    // ... more signatures
+  ],
+  "timestamp": 1643673600,
+  "nonce": 123,
+  "emitter_chain": 30,
+  "emitter_address": "0x706f82e9bb5b0813501714ab5974216704980e31",
+  "sequence": 155060,
+  "consistency_level": 1,
+  "payload": "00000000..." // Optional hex-encoded payload
+}
+```
+
+**Example**
+```bash
+curl -X POST 'http://127.0.0.1:3000/wormhole/observer/vaas/decode' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "vaa": "AQAAAAQNAPNepbIkch+cLc3..."
+  }'
+```
+
+The endpoint decodes a base64-encoded VAA into its constituent parts according to the [Wormhole VAA specification](../../documentation/ADR-02-DOMAINS.md#vaa-structure).
