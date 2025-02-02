@@ -2,6 +2,8 @@
 
 This guide assumes you will use a Kubernetes cluster to deploy the project. Still, it's useful for Docker (or podman) too.
 
+Refer to [heshdotcc/hacklab](https://github.com/heshdotcc/hacklab) repo as a guide for working manifests that deploy MinIO, Prometheus, Grafana, Loki, Alloy, and Nvidia operator.
+
 For the Kubernetes guide you will need to create a namespace:
 ```
 kubectl create ns wormhole
